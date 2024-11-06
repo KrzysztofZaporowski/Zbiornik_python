@@ -1,5 +1,6 @@
 import plotly.express as pl
 import pandas as pd
+import numpy as np
 from dash import Dash, dcc, html, Input, Output, State
 
 # Initial parameters
@@ -9,13 +10,18 @@ INITIAL_T_SIM = 3600.0
 INITIAL_H_ZAD = 1.25
 INITIAL_K_P = 0.02
 
-# Other fixed parameters
+# Other parameters
 T_p = 0.1
 T_i = 0.5
-U_min = 0
-U_max = 10
-Qd_max = 0.05
-Qd_min = 0
+U_min = 0  # bottom bound - voltage
+U_max = 10  # upper bound - voltage
+Qd_max = 0.05  # upper bound
+Qd_min = 0  # bottom bound
+
+
+def generate_mark_steps(start, end, step):
+    return {round(x, 2): str(round(x, 2)) for x in np.arange(start, end + step, step)}
+
 
 app = Dash(__name__)
 
@@ -25,32 +31,32 @@ app.layout = html.Div(children=[
 
     # Sliders for adjusting parameters
     html.Label('Adjust Tank Cross-Section (A)'),
-    dcc.Slider(id='A-slider', min=0.5, max=5.0, step=0.1, value=INITIAL_A, marks={i: str(i) for i in range(1, 6)}),
+    dcc.Slider(id='A-slider', min=0.5, max=5.0, step=0.1, value=INITIAL_A, marks=generate_mark_steps(0.5, 5, 0.25)),
 
     html.Label('Adjust Beta Parameter (beta)'),
     dcc.Slider(id='beta-slider', min=0.01, max=0.1, step=0.001, value=INITIAL_BETA,
-               marks={round(i, 2): str(round(i, 2)) for i in [0.01, 0.03, 0.05, 0.07, 0.1]}),
+               marks=generate_mark_steps(0.01, 0.1, 0.01)),
 
     html.Label('Adjust Simulation Time (t_sim)'),
     dcc.Slider(id='t_sim-slider', min=1000, max=5000, step=100, value=INITIAL_T_SIM,
-               marks={i: str(i) for i in range(1000, 5001, 1000)}),
+               marks={i: str(i) for i in range(1000, 5001, 100)}),
 
     html.Label('Adjust Desired Water Level (h_zad)'),
     dcc.Slider(id='h_zad-slider', min=0.5, max=3.0, step=0.1, value=INITIAL_H_ZAD,
-               marks={i: str(i) for i in range(1, 4)}),
+               marks=generate_mark_steps(0.5, 3, 0.25)),
 
     html.Label('Adjust Regulator Gain (k_p)'),
     dcc.Slider(id='k_p-slider', min=0.01, max=0.1, step=0.001, value=INITIAL_K_P,
-               marks={round(i, 2): str(round(i, 2)) for i in [0.01, 0.03, 0.05, 0.07, 0.1]}),
+               marks=generate_mark_steps(0.01, 0.1, 0.01)),
 
     # Reset Button
     html.Button('Reset to Initial Values', id='reset-button', n_clicks=0),
 
     # Graphs to display
     html.Div(style={'display': 'flex', 'flex-direction': 'column', 'align-items': 'center'}, children=[
-        dcc.Graph(id='water-level-graph'),
-        dcc.Graph(id='flow-rate-graph'),
-        dcc.Graph(id='voltage-graph')
+        dcc.Graph(id='water-level-graph', style={'height': '800px', 'width': '100%'}),
+        dcc.Graph(id='flow-rate-graph', style={'height': '800px', 'width': '100%'}),
+        dcc.Graph(id='voltage-graph', style={'height': '800px', 'width': '100%'})
     ])
 ])
 
